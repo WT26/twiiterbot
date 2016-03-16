@@ -10,7 +10,7 @@ def followbot():
     with open("twitter_accounts.txt", "r") as f:
         lines = f.readlines()
 
-        print("Gathering status of all accounts in the .txt file, this will take a while.")
+        print("Gathering status of all accounts.")
         for line in lines:
             list = line.split(':')
 
@@ -30,41 +30,52 @@ def followbot():
 
             text_file = open("unfollowlist.txt", "w")
             following_counter = 0
-            for page in tweepy.Cursor(api.friends_ids, screen_name=name).pages():
-                for line in page:
-                    following_counter += 1
-                    text_file.write(str(line))
-                    text_file.write("\n")
-                #time.sleep(60)
-            text_file.close()
-            with open("followingnow.txt", "r") as f:
-                lines = f.readlines()
-                last_line = lines[-1]
-            write_actions = True
             try:
-                api.destroy_friendship(int(last_line))
+                for page in tweepy.Cursor(api.friends_ids, screen_name=name).pages():
+                    for line in page:
+                        following_counter += 1
+                        text_file.write(str(line))
+                        text_file.write("\n")
+                    #time.sleep(60)
 
-            except tweepy.TweepError as e:
-                errorcode = e.args[0][0]['code']
-                if (errorcode == 261):
-                    print("Application cannot do write actions. Name: " + name)
-                    write_actions = False
-                else:
-                    print(e)
-                    print("Error happened on account: " + name)
+
+                text_file.close()
+                with open("unfollowlist.txt", "r") as f:
+                    lines = f.readlines()
+                    last_line = lines[-1]
+                write_actions = True
+                try:
+                    api.destroy_friendship(int(last_line))
+
+                except tweepy.TweepError as e:
+                    errorcode = e.args[0][0]['code']
+                    if (errorcode == 261):
+                        print("Application cannot do write actions. Name: " + name)
+                        write_actions = False
+
+                    elif (errorcode == 88):
+                        print("Rate limit exceeded")
+
+                    else:
+                        print(e)
+                        print("Error happened on account: " + name)
+                        time.sleep(10)
+                    pass
+
+                except ConnectionResetError:
+                    print("Connection error, sleeping 10s and continuing")
                     time.sleep(10)
+                    continue
+
+                new_list = [name, CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET, following_counter, write_actions]
+                info_list.append(new_list)
+                name_list.append(new_list[0])
+            except tweepy.TweepError as e:
+                print(e)
+                print("Error happened on account: " + name)
                 pass
 
-            except ConnectionResetError:
-                print("Connection error, sleeping 10s and continuing")
-                time.sleep(10)
-                continue
-
-            new_list = [name, CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET, following_counter, write_actions]
-            info_list.append(new_list)
-            name_list.append(new_list[0])
-
-
+    print("\nDONE.\n")
     for acc in info_list:
         if (int(acc[5]) > 2126) and acc[6]:
             number_to_unfollow = int(acc[5]) - 2126
@@ -94,7 +105,7 @@ def unfollow(acc, number_to_unfollow):
         for line in page:
             text_file.write(str(line))
             text_file.write("\n")
-    print("People who " + name + " is currently following gathered, starting the unfollowing")
+    print("Starting unfollowing on: " + name)
     text_file.close()
 
     #print("All current 'following now gathered', Starting to unfollow.\n")
@@ -102,19 +113,24 @@ def unfollow(acc, number_to_unfollow):
     counter = 0
     while running:
         try:
-            with open("followingnow.txt", "r") as f:
+            with open("unfollowlist.txt", "r") as f:
                 lines = f.readlines()
                 last_line = lines[-1]
             try:
                 api.destroy_friendship(int(last_line))
-            except ConnectionResetError or tweepy.TweepError:
-                print("Some sort of error, waiting 20s")
+            except tweepy.TweepError as e:
+                print(e)
+                print("error happened on : " + name)
+                time.sleep(20)
+                pass
+            except ConnectionResetError:
+                print("Connection error")
                 time.sleep(20)
                 pass
             time.sleep(6)
-            with open("followingnow.txt", "r") as fin:
+            with open("unfollowlist.txt", "r") as fin:
                 data = fin.read().splitlines(True)
-            with open('followingnow.txt', 'w') as fout:
+            with open('unfollowlist.txt', 'w') as fout:
                 fout.writelines(data[:-1])
 
             s = str(counter) + ' / ' + str(number_to_unfollow) + ' unfollowed.'# string for output
@@ -209,15 +225,17 @@ def find_ids(api, name_to_find_ids_of):
 
 def run():
     running = True
+    counter = 1
     while running:
+
         DAY_IN_SECONDS = 86400
         start_time = time.time()
 
         followbot()
-
+        print("Follow loops done: " + str(counter))
         script_took = start_time - time.time()
         time_to_wait = DAY_IN_SECONDS - script_took
         time.sleep(time_to_wait)
-
+        counter += 1
 
 run()
