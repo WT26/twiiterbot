@@ -134,8 +134,8 @@ def unfollow(acc, number_to_unfollow):
                 fout.writelines(data[:-1])
 
             s = str(counter) + ' / ' + str(number_to_unfollow) + ' unfollowed.'# string for output
-            print(s, end='')                        # just print and flush
-            # sys.stdout.flush()                    # needed for flush when using \x08
+            #print(s, end='')                        # just print and flush
+            sys.stdout.flush()                    # needed for flush when using \x08
             backspace(len(s))                       # back for n chars
 
             if counter >= number_to_unfollow:
@@ -149,8 +149,8 @@ def unfollow(acc, number_to_unfollow):
     print("Unfollowing done on " + name + "!")
 
 def backspace(n):
-    # print((b'\x08' * n).decode(), end='') # use \x08 char to go back
-    print('\r' * n, end='')                 # use '\r' to go back
+    print((b'\x08' * n).decode(), end='') # use \x08 char to go back
+    #print('\r' * n, end='')                 # use '\r' to go back
 
 def follow(acc, name_to_find_followers_of):
 
@@ -199,8 +199,8 @@ def follow(acc, name_to_find_followers_of):
 
 
             s = str(counter) + ' / ' + str(1000) + ' followed.'# string for output
-            print(s, end='')                        # just print and flush
-            # sys.stdout.flush()                    # needed for flush when using \x08
+            #print(s, end='')                        # just print and flush
+            sys.stdout.flush()                    # needed for flush when using \x08
             backspace(len(s))                       # back for n chars
 
             if counter > 995:
