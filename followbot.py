@@ -11,6 +11,9 @@ def followbot():
         lines = f.readlines()
 
         print("Gathering status of all accounts.")
+        with open("status.txt", "a") as f:
+            f.write("\nGathering status of all accounts.\n")
+
         for line in lines:
             list = line.split(':')
 
@@ -51,6 +54,8 @@ def followbot():
                     errorcode = e.args[0][0]['code']
                     if (errorcode == 261):
                         print("Application cannot do write actions. Name: " + name)
+                        with open("status.txt", "a") as f:
+                            f.write("\nApplication cannot do write actions. Name: " + name + "\n")
                         write_actions = False
 
                     elif (errorcode == 88):
@@ -76,14 +81,17 @@ def followbot():
                 pass
 
     print("\nDONE.\n")
-    for acc in info_list:
-        if (int(acc[5]) > 2126) and acc[6]:
-            number_to_unfollow = int(acc[5]) - 2126
-            unfollow(acc, number_to_unfollow)
+    with open("status.txt", "a") as f:
+        f.write("\nDONE.\n")
 
-    for acc in info_list:
-        if acc[6]:
-            follow(acc, name_to_find_ids_of)
+    #for acc in info_list:
+    #    if (int(acc[5]) > 2126) and acc[6]:
+    #        number_to_unfollow = int(acc[5]) - 2126
+    #        unfollow(acc, number_to_unfollow)
+
+    #for acc in info_list:
+    #    if acc[6]:
+    #        follow(acc, name_to_find_ids_of)
 
 
 
@@ -106,6 +114,8 @@ def unfollow(acc, number_to_unfollow):
             text_file.write(str(line))
             text_file.write("\n")
     print("Starting unfollowing on: " + name)
+    with open("status.txt", "a") as f:
+        f.write("\nStarting unfollowing on: " + name + "\n")
     text_file.close()
 
     #print("All current 'following now gathered', Starting to unfollow.\n")
@@ -133,10 +143,10 @@ def unfollow(acc, number_to_unfollow):
             with open('unfollowlist.txt', 'w') as fout:
                 fout.writelines(data[:-1])
 
-            #s = str(counter) + ' / ' + str(number_to_unfollow) + ' unfollowed.'# string for output
-            #print(s, end='')                        # just print and flush
-            #sys.stdout.flush()                    # needed for flush when using \x08
-            #backspace(len(s))                       # back for n chars
+                s = str(counter) + ' / ' + str(number_to_unfollow) + ' unfollowed.'# string for output
+                print(s, end='')                        # just print and flush
+                #sys.stdout.flush()                    # needed for flush when using \x08
+                backspace(len(s))                       # back for n chars
 
             if counter >= number_to_unfollow:
                 running = False
@@ -147,11 +157,14 @@ def unfollow(acc, number_to_unfollow):
             time.sleep(20)
             pass
     print("Unfollowing done on " + name + "!")
+    with open("status.txt", "a") as f:
+        f.write("\nUnfollowing done on " + name + "!\n")
+
 
 def backspace(n):
-    print("p")
+    #print("p")
     #print((b'\x08' * n).decode(), end='') # use \x08 char to go back
-    #print('\r' * n, end='')                 # use '\r' to go back
+    print('\r' * n, end='')                 # use '\r' to go back
 
 def follow(acc, name_to_find_followers_of):
 
@@ -170,6 +183,9 @@ def follow(acc, name_to_find_followers_of):
     counter = 1
 
     print("Starting to follow: " + str(1000) + " Users on: " + name )
+    with open("status.txt", "a") as f:
+        f.write("\nStarting to follow: " + str(1000) + " Users on: " + name + "\n")
+
     while running:
         if os.stat("idfile.txt").st_size <= 0:
             find_ids(api, name_to_find_followers_of)
@@ -180,14 +196,23 @@ def follow(acc, name_to_find_followers_of):
                 api.create_friendship(int(line))
                 counter += 1
             except tweepy.TweepError as e:
-                errorcode = e.args[0][0]['code']
-                if (errorcode == 261):
-                    print("Application cannot do write actions. Name: " + name)
-                else:
-                    print(e)
-                    print("Error happened on account: " + name)
-                    time.sleep(10)
-                pass
+                try:
+                    errorcode = e.args[0][0]['code']
+                    if (errorcode == 261):
+                        print("Application cannot do write actions. Name: " + name)
+                    elif(errorcode == 161):
+                        print("Followed 1000 already, " + name + " skipping")
+                        with open("status.txt", "a") as f:
+                            f.write("\nFollowed 1000 already, " + name + " skipping\n")
+                        counter = 2000
+                    else:
+                        print(e)
+                        print("Error happened on account: " + name)
+                        time.sleep(10)
+                    pass
+                except TypeError:
+                    time.sleep(20)
+                    pass
             except ConnectionResetError:
                 print("Connection error, sleeping 10s and continuing")
                 time.sleep(10)
@@ -199,14 +224,16 @@ def follow(acc, name_to_find_followers_of):
                 fout.writelines(data[1:])
 
 
-            #s = str(counter) + ' / ' + str(1000) + ' followed.'# string for output
-            #print(s, end='')                        # just print and flush
+            s = str(counter) + ' / ' + str(1000) + ' followed.'# string for output
+            print(s, end='')                        # just print and flush
             #sys.stdout.flush()                    # needed for flush when using \x08
-            #backspace(len(s))                       # back for n chars
+            backspace(len(s))                       # back for n chars
 
             if counter > 995:
                 running = False
                 print("Following Done on: " + name)
+                with open("status.txt", "a") as f:
+                    f.write("Following Done on: " + name + "\n")
 
 
 def find_ids(api, name_to_find_ids_of):
@@ -219,7 +246,7 @@ def find_ids(api, name_to_find_ids_of):
             text_file.write("\n")
         time.sleep(60)
         counter += 1
-        if (counter > 10):
+        if (counter > 20):
             break
     text_file.close()
 
@@ -233,9 +260,17 @@ def run():
         start_time = time.time()
 
         followbot()
+
         print("Follow loops done: " + str(counter))
+        with open("status.txt", "a") as f:
+            f.write("Follow loops done: " + str(counter))
         script_took = start_time - time.time()
         time_to_wait = DAY_IN_SECONDS - script_took
+        time_to_wait_in_minutes = time_to_wait / 60
+        print("\nNow waiting: " + str(time_to_wait_in_minutes) + " minutes and starting over.")
+
+        with open("status.txt", "a") as f:
+            f.write("\nNow waiting: " + str(time_to_wait_in_minutes) + " minutes and starting over.")
         time.sleep(time_to_wait)
         counter += 1
 
