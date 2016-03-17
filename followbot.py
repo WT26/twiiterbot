@@ -84,14 +84,14 @@ def followbot():
     with open("status.txt", "a") as f:
         f.write("\nDONE.\n")
 
-    #for acc in info_list:
-    #    if (int(acc[5]) > 2126) and acc[6]:
-    #        number_to_unfollow = int(acc[5]) - 2126
-    #        unfollow(acc, number_to_unfollow)
+    for acc in info_list:
+        if (int(acc[5]) > 2126) and acc[6]:
+            number_to_unfollow = int(acc[5]) - 2126
+            unfollow(acc, number_to_unfollow)
 
-    #for acc in info_list:
-    #    if acc[6]:
-    #        follow(acc, name_to_find_ids_of)
+    for acc in info_list:
+        if acc[6]:
+            follow(acc, name_to_find_ids_of)
 
 
 
