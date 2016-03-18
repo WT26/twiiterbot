@@ -264,7 +264,7 @@ def run():
         print("Follow loops done: " + str(counter))
         with open("status.txt", "a") as f:
             f.write("Follow loops done: " + str(counter))
-        script_took = start_time - time.time()
+        script_took = time.time() - start_time
         time_to_wait = DAY_IN_SECONDS - script_took
         time_to_wait_in_minutes = time_to_wait / 60
         print("\nNow waiting: " + str(time_to_wait_in_minutes) + " minutes and starting over.")
