@@ -3,96 +3,103 @@
 import tweepy, time, sys, os
 
 def followbot():
-    #name_to_find_ids_of = input("Name to find ids of? Example: twitter, Android, gameinformer, gamasutra\n>")
-    name_to_find_ids_of = 'twitter'
-    name_list = []
-    info_list = []
-    with open("twitter_accounts.txt", "r") as f:
-        lines = f.readlines()
+    try:
+        #name_to_find_ids_of = input("Name to find ids of? Example: twitter, Android, gameinformer, gamasutra\n>")
+        name_to_find_ids_of = 'twitter'
+        name_list = []
+        info_list = []
+        with open("twitter_accounts.txt", "r") as f:
+            lines = f.readlines()
 
-        print("Gathering status of all accounts.")
-        with open("status.txt", "a") as f:
-            f.write("\nGathering status of all accounts.\n")
+            print("Gathering status of all accounts.")
+            with open("status.txt", "a") as f:
+                f.write("\nGathering status of all accounts.\n")
 
-        for line in lines:
-            list = line.split(':')
+            for line in lines:
+                list = line.split(':')
 
-            name = list[0]
-            CONSUMER_KEY = list[1]
-            CONSUMER_SECRET = list[2]
-            ACCESS_KEY = list[3]
-            ACCESS_SECRET = list[4][:-1]
-            #print(repr(CONSUMER_KEY))
-            #print(repr(CONSUMER_SECRET))
-            #print(repr(ACCESS_KEY))
-            #print(repr(ACCESS_SECRET))
+                name = list[0]
+                CONSUMER_KEY = list[1]
+                CONSUMER_SECRET = list[2]
+                ACCESS_KEY = list[3]
+                ACCESS_SECRET = list[4][:-1]
+                #print(repr(CONSUMER_KEY))
+                #print(repr(CONSUMER_SECRET))
+                #print(repr(ACCESS_KEY))
+                #print(repr(ACCESS_SECRET))
 
-            auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-            auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-            api = tweepy.API(auth)
+                auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+                auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+                api = tweepy.API(auth)
 
-            text_file = open("unfollowlist.txt", "w")
-            following_counter = 0
-            try:
-                for page in tweepy.Cursor(api.friends_ids, screen_name=name).pages():
-                    for line in page:
-                        following_counter += 1
-                        text_file.write(str(line))
-                        text_file.write("\n")
-                    #time.sleep(60)
-
-
-                text_file.close()
-                with open("unfollowlist.txt", "r") as f:
-                    lines = f.readlines()
-                    last_line = lines[-1]
-                write_actions = True
+                text_file = open("unfollowlist.txt", "w")
+                following_counter = 0
                 try:
-                    api.destroy_friendship(int(last_line))
+                    for page in tweepy.Cursor(api.friends_ids, screen_name=name).pages():
+                        for line in page:
+                            following_counter += 1
+                            text_file.write(str(line))
+                            text_file.write("\n")
+                        #time.sleep(60)
 
-                except tweepy.TweepError as e:
-                    errorcode = e.args[0][0]['code']
-                    if (errorcode == 261):
-                        print("Application cannot do write actions. Name: " + name)
-                        with open("status.txt", "a") as f:
-                            f.write("\nApplication cannot do write actions. Name: " + name + "\n")
-                        write_actions = False
 
-                    elif (errorcode == 88):
-                        print("Rate limit exceeded")
+                    text_file.close()
+                    with open("unfollowlist.txt", "r") as f:
+                        lines = f.readlines()
+                        last_line = lines[-1]
+                    write_actions = True
+                    try:
+                        api.destroy_friendship(int(last_line))
 
-                    else:
-                        print(e)
-                        print("Error happened on account: " + name)
+                    except tweepy.TweepError as e:
+                        errorcode = e.args[0][0]['code']
+                        if (errorcode == 261):
+                            print("Application cannot do write actions. Name: " + name)
+                            with open("status.txt", "a") as f:
+                                f.write("\nApplication cannot do write actions. Name: " + name + "\n")
+                            write_actions = False
+
+                        elif (errorcode == 88):
+                            print("Rate limit exceeded")
+
+                        else:
+                            print(e)
+                            print("Error happened on account: " + name)
+                            time.sleep(10)
+                        pass
+
+                    except ConnectionResetError:
+                        print("Connection error, sleeping 10s and continuing")
                         time.sleep(10)
+                        continue
+
+                    new_list = [name, CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET, following_counter, write_actions]
+                    info_list.append(new_list)
+                    name_list.append(new_list[0])
+                except tweepy.TweepError as e:
+                    print(e)
+                    print("Error happened on account: " + name)
                     pass
 
-                except ConnectionResetError:
-                    print("Connection error, sleeping 10s and continuing")
-                    time.sleep(10)
-                    continue
+        print("\nDONE.\n")
+        with open("status.txt", "a") as f:
+            f.write("\nDONE.\n")
 
-                new_list = [name, CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET, following_counter, write_actions]
-                info_list.append(new_list)
-                name_list.append(new_list[0])
-            except tweepy.TweepError as e:
-                print(e)
-                print("Error happened on account: " + name)
-                pass
+        for acc in info_list:
+            if (int(acc[5]) > 2126) and acc[6]:
+                number_to_unfollow = int(acc[5]) - 2126
+                unfollow(acc, number_to_unfollow)
 
-    print("\nDONE.\n")
-    with open("status.txt", "a") as f:
-        f.write("\nDONE.\n")
-
-    for acc in info_list:
-        if (int(acc[5]) > 2126) and acc[6]:
-            number_to_unfollow = int(acc[5]) - 2126
-            unfollow(acc, number_to_unfollow)
-
-    for acc in info_list:
-        if acc[6]:
-            follow(acc, name_to_find_ids_of)
-
+        for acc in info_list:
+            if acc[6]:
+                follow(acc, name_to_find_ids_of)
+    except (tweepy.TweepError, RuntimeError, TypeError, NameError, ConnectionError) as e:
+        print("Fatal error, starting over.")
+        print(e)
+        with open("status.txt", "a") as f:
+            f.write("Fatal error, starting over.")
+            f.write(e)
+        pass
 
 
 
@@ -254,16 +261,22 @@ def find_ids(api, name_to_find_ids_of):
 def run():
     running = True
     counter = 1
+
     while running:
 
         DAY_IN_SECONDS = 86400
         start_time = time.time()
+        current_time = time.strftime("%H:%M:%S")
 
+        with open("status.txt", "w") as f:
+            f.write("Starting the bot, current time: " +  current_time + "\n")
         followbot()
 
         print("Follow loops done: " + str(counter))
+        current_time = time.strftime("%H:%M:%S")
+        print("Follow loops done: " + str(counter) + "  And current time: " + current_time + "\n")
         with open("status.txt", "a") as f:
-            f.write("Follow loops done: " + str(counter))
+            f.write("Follow loops done: " + str(counter) + "  And current time: " + current_time + "\n")
         script_took = time.time() - start_time
         time_to_wait = DAY_IN_SECONDS - script_took
         time_to_wait_in_minutes = time_to_wait / 60
