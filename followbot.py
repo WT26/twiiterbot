@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import tweepy, time, sys, os
+import tweepy, time, sys, os, smtplib
 
 def followbot():
     try:
@@ -256,6 +256,30 @@ def find_ids(api, name_to_find_ids_of):
         if (counter > 20):
             break
     text_file.close()
+        
+
+def email_this(mssg):
+    try:
+        smtpserver = 'smtp.live.com'
+        AUTHREQUIRED = 1 # if you need to use SMTP AUTH set to 1
+        smtpuser = "xxx"
+        smtppass = "xxx"
+
+        RECIPIENTS = "xxx"
+        SENDER = "xxx"
+        #mssg = "test message"
+        s = mssg
+
+        server = smtplib.SMTP(smtpserver,587)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(smtpuser,smtppass)
+        server.sendmail(SENDER, [RECIPIENTS], s)
+        server.quit()
+    except:
+        print("Error trying to send email, skipping")
+        pass
 
 
 def run():
@@ -279,11 +303,16 @@ def run():
             f.write("Follow loops done: " + str(counter) + "  And current time: " + current_time + "\n")
         script_took = time.time() - start_time
         time_to_wait = DAY_IN_SECONDS - script_took
-        time_to_wait_in_minutes = time_to_wait / 60
-        print("\nNow waiting: " + str(time_to_wait_in_minutes) + " minutes and starting over.")
+        time_to_wait_in_hours = time_to_wait / 60 / 60
+        print("\nNow waiting: " + str(time_to_wait_in_hours) + " hours and starting over.")
 
         with open("status.txt", "a") as f:
-            f.write("\nNow waiting: " + str(time_to_wait_in_minutes) + " minutes and starting over.")
+            f.write("\nNow waiting: " + str(time_to_wait_in_hours) + " hours and starting over.")
+
+        with open('status.txt', 'r') as myfile:
+            data=myfile.read()
+        email_this(data)
+
         time.sleep(time_to_wait)
         counter += 1
 
