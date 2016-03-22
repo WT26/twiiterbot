@@ -303,7 +303,10 @@ def run():
             f.write("Follow loops done: " + str(counter) + "  And current time: " + current_time + "\n")
         script_took = time.time() - start_time
         time_to_wait = DAY_IN_SECONDS - script_took
+        if (time_to_wait <= 1):
+            time_to_wait = 1
         time_to_wait_in_hours = time_to_wait / 60 / 60
+
         print("\nNow waiting: " + str(time_to_wait_in_hours) + " hours and starting over.")
 
         with open("status.txt", "a") as f:
@@ -312,6 +315,7 @@ def run():
         with open('status.txt', 'r') as myfile:
             data=myfile.read()
         email_this(data)
+
 
         time.sleep(time_to_wait)
         counter += 1
